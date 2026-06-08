@@ -143,16 +143,15 @@ export default function NoorulAcademyApp() {
     }
 
     loadRemoteData();
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem('na_admin_auth');
+    }
 
     return () => {
       cancelled = true;
     };
   }, []);
 
-  useEffect(() => {
-    const auth = loadJson('na_admin_auth', false);
-    setAdminLoggedIn(Boolean(auth));
-  }, []);
 
   useEffect(() => saveJson(studentKey, students), [students]);
   useEffect(() => saveJson(progressKey, progressByStudent), [progressByStudent]);
@@ -216,19 +215,16 @@ export default function NoorulAcademyApp() {
 
     if (adminUser === allowedUser && adminPass === allowedPass) {
       setAdminLoggedIn(true);
-      saveJson('na_admin_auth', true);
       setAdminError(null);
       setActiveAdminTab('dashboard');
     } else {
       setAdminError('Invalid email or password');
       setAdminLoggedIn(false);
-      saveJson('na_admin_auth', false);
     }
   }
 
   function handleAdminLogout() {
     setAdminLoggedIn(false);
-    saveJson('na_admin_auth', false);
     setActiveAdminTab('login');
     setActivePage('home');
   }
