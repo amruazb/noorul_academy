@@ -229,6 +229,7 @@ export default function NoorulAcademyApp() {
   function handleAdminLogout() {
     setAdminLoggedIn(false);
     saveJson('na_admin_auth', false);
+    setActiveAdminTab('login');
     setActivePage('home');
   }
 
@@ -641,18 +642,24 @@ export default function NoorulAcademyApp() {
               <h2>Admin Panel — Noorul Academy</h2>
               <div style={{display:'flex',alignItems:'center',gap:12}}>
                 {adminLoggedIn ? <button className="btn-small btn-small-outline" onClick={handleAdminLogout}>Logout</button> : null}
-                <div className="admin-tabs">
-                {['dashboard', 'students', 'progress', 'poster'].map((tab) => (
-                  <button key={tab} className={`admin-tab ${activeAdminTab === tab ? 'active' : ''}`} onClick={() => setActiveAdminTab(tab)}>
-                    {tab === 'poster' ? '🎨 Poster Creator' : tab}
-                  </button>
-                ))}
-                </div>
+                {adminLoggedIn ? (
+                  <div className="admin-tabs">
+                    {['dashboard', 'students', 'progress', 'poster'].map((tab) => (
+                      <button
+                        key={tab}
+                        className={`admin-tab ${activeAdminTab === tab ? 'active' : ''}`}
+                        onClick={() => setActiveAdminTab(tab)}
+                      >
+                        {tab === 'poster' ? '🎨 Poster Creator' : tab}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
               </div>
             </div>
 
             <div className="admin-body">
-              {activeAdminTab === 'login' ? (
+              {!adminLoggedIn || activeAdminTab === 'login' ? (
                 <div className="admin-section active">
                   <div className="table-wrap" style={{padding: '1.25rem'}}>
                     <h3>Admin Login</h3>
@@ -670,7 +677,7 @@ export default function NoorulAcademyApp() {
                 </div>
               ) : null}
 
-              {activeAdminTab === 'dashboard' ? (
+              {adminLoggedIn && activeAdminTab === 'dashboard' ? (
                 <div className="admin-section active">
                   <div className="admin-cards">
                     <div className="admin-card admin-card-accent"><div className="admin-card-num">{dashboardTotals.total}</div><div className="admin-card-lbl">Total Students</div></div>
@@ -713,7 +720,7 @@ export default function NoorulAcademyApp() {
                 </div>
               ) : null}
 
-              {activeAdminTab === 'students' ? (
+              {adminLoggedIn && activeAdminTab === 'students' ? (
                 <div className="admin-section active">
                   <div className="admin-toolbar">
                     <h3>All Students</h3>
@@ -762,7 +769,7 @@ export default function NoorulAcademyApp() {
                 </div>
               ) : null}
 
-              {activeAdminTab === 'progress' ? (
+              {adminLoggedIn && activeAdminTab === 'progress' ? (
                 <div className="admin-section active">
                   <div className="progress-panel">
                     <h3>Student Progress Tracker</h3>
@@ -819,7 +826,7 @@ export default function NoorulAcademyApp() {
                 </div>
               ) : null}
 
-              {activeAdminTab === 'poster' ? (
+              {adminLoggedIn && activeAdminTab === 'poster' ? (
                 <div className="admin-section active">
                   <div className="poster-grid">
                     <div className="poster-controls">

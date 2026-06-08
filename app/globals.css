@@ -1350,6 +1350,40 @@ tr:hover td {
     justify-content: flex-end;
   }
 
+  .admin-header {
+    align-items: stretch;
+  }
+
+  .admin-tabs {
+    width: 100%;
+  }
+
+  .admin-tab {
+    flex: 1 1 auto;
+    min-width: 7rem;
+  }
+
+  .table-head,
+  .admin-toolbar,
+  .progress-select-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-input,
+  .progress-select-row select {
+    max-width: none;
+    width: 100%;
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+  }
+
+  table {
+    min-width: 720px;
+  }
+
   .poster-footer {
     display: flex;
     align-items: flex-start;
@@ -1365,13 +1399,105 @@ tr:hover td {
 }
 
 @media (max-width: 640px) {
+  .site-nav {
+    padding: 0.75rem 0.8rem;
+  }
+
+  .nav-brand {
+    gap: 0.6rem;
+  }
+
+  .nav-logo {
+    width: 36px;
+    height: 36px;
+    font-size: 0.95rem;
+  }
+
+  .nav-title {
+    font-size: 0.9rem;
+  }
+
+  .nav-subtitle {
+    font-size: 0.56rem;
+    letter-spacing: 0.08em;
+  }
+
   .section,
   .hero-section {
-    padding-inline: 1rem;
+    padding-inline: 0.8rem;
   }
 
   .nav-button:not(.active) {
     display: none;
+  }
+
+  .admin-page {
+    overflow-x: hidden;
+  }
+
+  .admin-header {
+    padding: 1rem 0.8rem 0;
+  }
+
+  .admin-header h2 {
+    font-size: 0.92rem;
+  }
+
+  .admin-body {
+    padding: 0.8rem;
+  }
+
+  .admin-tabs {
+    gap: 0.25rem;
+    padding: 0.25rem;
+    border-radius: 0.9rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .admin-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .admin-tab {
+    white-space: nowrap;
+    padding: 0.5rem 0.85rem;
+    font-size: 0.78rem;
+  }
+
+  .admin-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-card {
+    padding: 1rem;
+  }
+
+  .admin-card-num {
+    font-size: 1.7rem;
+  }
+
+  .table-wrap,
+  .progress-panel,
+  .poster-controls,
+  .poster-preview-card {
+    border-radius: 0.9rem;
+  }
+
+  .table-head,
+  .admin-toolbar {
+    padding: 0.9rem;
+  }
+
+  .search-input {
+    max-width: none;
+    width: 100%;
+  }
+
+  th,
+  td {
+    padding: 0.65rem 0.75rem;
+    font-size: 0.78rem;
   }
 
   .form-row,
@@ -1394,5 +1520,39 @@ tr:hover td {
   .course-preview-tag {
     grid-column: 2;
     justify-self: start;
+  }
+
+  .poster-controls,
+  .poster-preview-card,
+  .enrol-form {
+    padding: 1rem;
+  }
+
+  .poster-preview {
+    min-height: 32rem;
+    padding: 1rem;
+  }
+
+  .poster-marketing-header,
+  .poster-preview-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .poster-marketing-badge {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .poster-footer {
+    gap: 0.75rem;
+  }
+
+  .poster-footer-center {
+    text-align: left;
+  }
+
+  .juz-grid {
+    grid-template-columns: repeat(auto-fill, minmax(58px, 1fr));
   }
 }
