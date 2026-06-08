@@ -111,8 +111,42 @@ export default function NoorulAcademyApp() {
   const [adminError, setAdminError] = useState(null);
 
   useEffect(() => {
-    setStudents(loadJson(studentKey, []));
-    setProgressByStudent(loadJson(progressKey, {}));
+    let cancelled = false;
+
+    async function loadRemoteData() {
+      try {
+        const [studentsResponse, progressResponse] = await Promise.all([
+          fetch('/api/students'),
+          fetch('/api/progress')
+        ]);
+
+        const studentsPayload = studentsResponse.ok ? await studentsResponse.json() : null;
+        const progressPayload = progressResponse.ok ? await progressResponse.json() : null;
+
+        if (cancelled) return;
+
+        const remoteStudents = Array.isArray(studentsPayload?.students) ? studentsPayload.students : [];
+        const remoteProgress = progressPayload?.progress && typeof progressPayload.progress === 'object' ? progressPayload.progress : {};
+
+        if (remoteStudents.length || Object.keys(remoteProgress).length) {
+          setStudents(remoteStudents);
+          setProgressByStudent(remoteProgress);
+          return;
+        }
+      } catch {
+        // Fall back to local cache below.
+      }
+
+      if (cancelled) return;
+      setStudents(loadJson(studentKey, []));
+      setProgressByStudent(loadJson(progressKey, {}));
+    }
+
+    loadRemoteData();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -211,27 +245,33 @@ export default function NoorulAcademyApp() {
       return;
     }
 
-    setStudents((current) => [
-      ...current,
-      {
-        id: Date.now(),
-        name: enrollment.name.trim(),
-        gender: enrollment.gender,
-        age: enrollment.age,
-        className: enrollment.className.trim(),
-        course: enrollment.course,
-        teacher: enrollment.teacher.trim(),
-        phone: enrollment.phone.trim(),
-        notes: enrollment.notes.trim(),
-        enrolledAt: new Date().toISOString().split('T')[0],
-        status: 'Active'
-      }
-    ]);
+    const newStudent = {
+      id: Date.now(),
+      name: enrollment.name.trim(),
+      gender: enrollment.gender,
+      age: enrollment.age,
+      className: enrollment.className.trim(),
+      course: enrollment.course,
+      teacher: enrollment.teacher.trim(),
+      phone: enrollment.phone.trim(),
+      notes: enrollment.notes.trim(),
+      enrolledAt: new Date().toISOString().split('T')[0],
+      status: 'Active'
+    };
 
+    setStudents((current) => [...current, newStudent]);
     setEnrollment(initialEnrollment);
     setEnrollmentFeedback({ kind: 'success', text: 'Registration successful. The student has been enrolled.' });
     setActivePage('admin');
     setActiveAdminTab('dashboard');
+
+    fetch('/api/students', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newStudent)
+    }).catch(() => {
+      setEnrollmentFeedback({ kind: 'error', text: 'Saved locally, but Supabase sync failed.' });
+    });
   }
 
   function deleteStudent(studentId) {
@@ -251,6 +291,12 @@ export default function NoorulAcademyApp() {
     if (String(studentId) === posterStudentId) {
       resetPoster();
     }
+
+    fetch(`/api/students/${studentId}`, {
+      method: 'DELETE'
+    }).catch(() => {
+      setEnrollmentFeedback({ kind: 'error', text: 'Deleted locally, but Supabase sync failed.' });
+    });
   }
 
   function selectProgressStudent(studentId) {
@@ -274,18 +320,28 @@ export default function NoorulAcademyApp() {
   function saveProgress() {
     if (!progressStudentId) return;
 
+    const progressPayload = {
+      teacher: progressDraft.teacher,
+      examiner: progressDraft.examiner,
+      mark: progressDraft.mark,
+      notes: progressDraft.notes,
+      juz: progressDraft.juz
+    };
+
     setProgressByStudent((current) => ({
       ...current,
-      [progressStudentId]: {
-        teacher: progressDraft.teacher,
-        examiner: progressDraft.examiner,
-        mark: progressDraft.mark,
-        notes: progressDraft.notes,
-        juz: progressDraft.juz
-      }
+      [progressStudentId]: progressPayload
     }));
 
     setProgressFeedback({ kind: 'success', text: 'Progress saved successfully.' });
+
+    fetch('/api/progress', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ studentId: progressStudentId, ...progressPayload })
+    }).catch(() => {
+      setProgressFeedback({ kind: 'error', text: 'Saved locally, but Supabase sync failed.' });
+    });
   }
 
   function applyPosterStudent(studentId) {
