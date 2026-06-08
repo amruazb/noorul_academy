@@ -105,10 +105,19 @@ export default function NoorulAcademyApp() {
   const [posterPhoto, setPosterPhoto] = useState('');
   const [posterFeedback, setPosterFeedback] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [adminLoggedIn, setAdminLoggedIn] = useState(false);
+  const [adminUser, setAdminUser] = useState('');
+  const [adminPass, setAdminPass] = useState('');
+  const [adminError, setAdminError] = useState(null);
 
   useEffect(() => {
     setStudents(loadJson(studentKey, []));
     setProgressByStudent(loadJson(progressKey, {}));
+  }, []);
+
+  useEffect(() => {
+    const auth = loadJson('na_admin_auth', false);
+    setAdminLoggedIn(Boolean(auth));
   }, []);
 
   useEffect(() => saveJson(studentKey, students), [students]);
@@ -149,11 +158,44 @@ export default function NoorulAcademyApp() {
   const progressPercent = Math.round((completedJuz / 30) * 100);
 
   function openPage(pageKey) {
+    // If navigating to admin and not authenticated, show login tab
+    if (pageKey === 'admin' && !adminLoggedIn) {
+      setActivePage('admin');
+      setActiveAdminTab('login');
+      window.scrollTo(0, 0);
+      return;
+    }
+
     setActivePage(pageKey);
     window.scrollTo(0, 0);
     if (pageKey === 'admin') {
       setActiveAdminTab('dashboard');
     }
+  }
+
+  function handleAdminLogin(e) {
+    e.preventDefault();
+    // NOTE: This is a simple client-side check stored in memory/localStorage.
+    // For production, use a server-side auth and avoid committing credentials.
+    const allowedUser = 'hafsavmazb@gmail.com';
+    const allowedPass = '309456@Farah';
+
+    if (adminUser === allowedUser && adminPass === allowedPass) {
+      setAdminLoggedIn(true);
+      saveJson('na_admin_auth', true);
+      setAdminError(null);
+      setActiveAdminTab('dashboard');
+    } else {
+      setAdminError('Invalid email or password');
+      setAdminLoggedIn(false);
+      saveJson('na_admin_auth', false);
+    }
+  }
+
+  function handleAdminLogout() {
+    setAdminLoggedIn(false);
+    saveJson('na_admin_auth', false);
+    setActivePage('home');
   }
 
   function submitEnrollment(event) {
@@ -541,16 +583,37 @@ export default function NoorulAcademyApp() {
           <section className="admin-page">
             <div className="admin-header">
               <h2>Admin Panel — Noorul Academy</h2>
-              <div className="admin-tabs">
+              <div style={{display:'flex',alignItems:'center',gap:12}}>
+                {adminLoggedIn ? <button className="btn-small btn-small-outline" onClick={handleAdminLogout}>Logout</button> : null}
+                <div className="admin-tabs">
                 {['dashboard', 'students', 'progress', 'poster'].map((tab) => (
                   <button key={tab} className={`admin-tab ${activeAdminTab === tab ? 'active' : ''}`} onClick={() => setActiveAdminTab(tab)}>
                     {tab === 'poster' ? '🎨 Poster Creator' : tab}
                   </button>
                 ))}
+                </div>
               </div>
             </div>
 
             <div className="admin-body">
+              {activeAdminTab === 'login' ? (
+                <div className="admin-section active">
+                  <div className="table-wrap" style={{padding: '1.25rem'}}>
+                    <h3>Admin Login</h3>
+                    <form onSubmit={handleAdminLogin} style={{maxWidth: 420}}>
+                      <label className="form-field compact"><span>Email</span><input value={adminUser} onChange={(e) => setAdminUser(e.target.value)} placeholder="you@example.com" /></label>
+                      <label className="form-field compact"><span>Password</span><input type="password" value={adminPass} onChange={(e) => setAdminPass(e.target.value)} placeholder="Password" /></label>
+                      <div style={{display:'flex',gap:8}}>
+                        <button className="btn-primary" type="submit">Sign in</button>
+                        <button className="btn-small btn-small-outline" type="button" onClick={() => { setAdminUser(''); setAdminPass(''); setAdminError(null); }}>Clear</button>
+                      </div>
+                      {adminError ? <div className={`alert alert-error`} style={{marginTop:12}}>{adminError}</div> : null}
+                    </form>
+                    <p style={{marginTop:12,color:'var(--text-soft)',fontSize:'0.9rem'}}>Use the admin credentials to access the dashboard. For a secure solution, configure server-side auth.</p>
+                  </div>
+                </div>
+              ) : null}
+
               {activeAdminTab === 'dashboard' ? (
                 <div className="admin-section active">
                   <div className="admin-cards">
