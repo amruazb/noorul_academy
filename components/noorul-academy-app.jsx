@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import html2canvas from 'html2canvas';
 import { aboutBullets, courseDetails, defaultPosterMessage, faculties, navigation, posterThemes } from '@/lib/site-data';
 import { loadJson, saveJson } from '@/lib/storage';
 
@@ -288,8 +289,37 @@ export default function NoorulAcademyApp() {
     setPosterDraft(defaultPosterDraft());
   }
 
-  function downloadPoster() {
-    setPosterFeedback({ kind: 'success', text: 'Use Print or a screenshot to save the certificate preview for now.' });
+  async function downloadPoster() {
+    const el = document.querySelector('.poster-preview');
+    if (!el) {
+      setPosterFeedback({ kind: 'error', text: 'Preview not found.' });
+      return;
+    }
+
+    try {
+      setPosterFeedback({ kind: 'info', text: 'Rendering PNG...' });
+      const canvas = await html2canvas(el, { backgroundColor: null, scale: 2, useCORS: true });
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          setPosterFeedback({ kind: 'error', text: 'Failed to render image.' });
+          return;
+        }
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const safeName = (posterDraft.headline || 'noorul-poster').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        a.download = `${safeName || 'poster'}.png`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        setPosterFeedback({ kind: 'success', text: 'Download started.' });
+      }, 'image/png');
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error(err);
+      setPosterFeedback({ kind: 'error', text: 'Error creating PNG. Try Print instead.' });
+    }
   }
 
   return (
