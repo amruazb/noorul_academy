@@ -564,6 +564,22 @@ img {
   outline: none;
 }
 
+/* Make native dropdown options legible in dark-themed areas */
+select, .form-field select, .poster-controls select, .progress-panel select {
+  color: inherit;
+}
+
+select option, .form-field select option, .poster-controls select option, .progress-panel select option {
+  background: var(--navy);
+  color: white;
+}
+
+/* Improve contrast for selects on light cards */
+.table-wrap select, .admin-card select {
+  background: #f8f9fa;
+  color: var(--text-dark);
+}
+
 .enroll-section .form-field input,
 .enroll-section .form-field select,
 .enroll-section .form-field textarea {
