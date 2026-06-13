@@ -584,7 +584,14 @@ export default function NoorulAcademyApp() {
                 <div className="form-row">
                   <label className="form-field">
                     <span>Age</span>
-                    <input type="number" min="4" max="15" value={enrollment.age} onChange={(event) => setEnrollment((current) => ({ ...current, age: event.target.value }))} placeholder="e.g. 9" />
+                    <input
+                      type="number"
+                      min="4"
+                      max={enrollment.gender === 'Male' ? 14 : undefined}
+                      value={enrollment.age}
+                      onChange={(event) => setEnrollment((current) => ({ ...current, age: event.target.value }))}
+                      placeholder={enrollment.gender === 'Female' ? 'e.g. 25' : 'e.g. 9'}
+                    />
                   </label>
 
                   <label className="form-field">
