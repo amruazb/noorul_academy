@@ -28,21 +28,35 @@ function StudentProgressCard({ student, dailyEntries, progressByStudent, rangeBo
 
   return (
     <article className="parent-student-card">
-      <div className="parent-student-head">
-        <div>
+        <div className="parent-student-head">
+        <div className="parent-student-title">
           <h3>{student.name}</h3>
           <p>{formatCourseLabel(student.course)} · {student.className || 'Class not set'} · Teacher: {student.teacher || '—'}</p>
         </div>
-        <span className={`performance-badge performance-${todayEntry?.performance || 'average'}`}>
-          {todayEntry ? performanceLabel(todayEntry.performance || 'average') : 'NO REPORT'}
-        </span>
+        <div className="parent-student-badge">
+          <span className={`performance-badge performance-${todayEntry?.performance || 'average'}`}>
+            {todayEntry ? performanceLabel(todayEntry.performance || 'average') : 'NO REPORT'}
+          </span>
+        </div>
       </div>
 
       <div className="parent-metrics-grid">
-        <div className="parent-metric"><span>Ayats learned</span><strong>{totals.ayatsLearned}</strong></div>
-        <div className="parent-metric"><span>Lines achieved</span><strong>{totals.achievedLines}</strong></div>
-        <div className="parent-metric"><span>Attendance</span><strong>{totals.attendanceRate}%</strong></div>
-        <div className="parent-metric"><span>Juz completed</span><strong>{completedJuz}/30</strong></div>
+        <div className="parent-metric">
+          <span className="parent-metric-label">Ayats learned</span>
+          <strong className="parent-metric-value">{totals.ayatsLearned}</strong>
+        </div>
+        <div className="parent-metric">
+          <span className="parent-metric-label">Lines achieved</span>
+          <strong className="parent-metric-value">{totals.achievedLines}</strong>
+        </div>
+        <div className="parent-metric">
+          <span className="parent-metric-label">Attendance</span>
+          <strong className="parent-metric-value">{totals.attendanceRate}%</strong>
+        </div>
+        <div className="parent-metric">
+          <span className="parent-metric-label">Juz completed</span>
+          <strong className="parent-metric-value">{completedJuz}/30</strong>
+        </div>
       </div>
 
       <div className="parent-progress-bar-wrap">
@@ -51,10 +65,21 @@ function StudentProgressCard({ student, dailyEntries, progressByStudent, rangeBo
 
       {todayEntry ? (
         <div className="today-progress-row">
-          <span>Today</span>
-          <span>{todayEntry.attendance ? 'Present' : 'Absent'}</span>
-          <span>{todayEntry.ayatsLearned || 0} ayats</span>
-          <span>{todayEntry.achievedLines || 0} lines</span>
+          <div className="today-progress-item">
+            <span className="today-progress-label">Today</span>
+          </div>
+          <div className="today-progress-item">
+            <span className="today-progress-label">Status</span>
+            <strong>{todayEntry.attendance ? 'Present' : 'Absent'}</strong>
+          </div>
+          <div className="today-progress-item">
+            <span className="today-progress-label">Ayats</span>
+            <strong>{todayEntry.ayatsLearned || 0}</strong>
+          </div>
+          <div className="today-progress-item">
+            <span className="today-progress-label">Lines</span>
+            <strong>{todayEntry.achievedLines || 0}</strong>
+          </div>
         </div>
       ) : null}
 
@@ -62,13 +87,15 @@ function StudentProgressCard({ student, dailyEntries, progressByStudent, rangeBo
         <h4>Recent Daily Reports</h4>
         {recentEntries.length ? recentEntries.slice(0, 5).map((entry) => (
           <div key={`${student.id}-${entry.progressDate}`} className="parent-recent-row">
-            <div>
+            <div className="parent-recent-info">
               <strong>{formatDisplayDate(entry.progressDate)}</strong>
               <span>{entry.attendance ? 'Present' : 'Absent'} · {entry.ayatsLearned || 0} ayats · {entry.achievedLines || 0} lines</span>
             </div>
-            <span className={`performance-badge performance-${entry.performance || 'average'}`}>
-              {performanceLabel(entry.performance || 'average')}
-            </span>
+            <div className="parent-recent-badge">
+              <span className={`performance-badge performance-${entry.performance || 'average'}`}>
+                {performanceLabel(entry.performance || 'average')}
+              </span>
+            </div>
           </div>
         )) : (
           <p className="empty-state">No daily reports recorded yet for this period.</p>
