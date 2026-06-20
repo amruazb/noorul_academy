@@ -2,8 +2,10 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import DailyReportPdfSheet from '@/components/daily-report-pdf-sheet';
+import PeriodReportPdfSheet from '@/components/period-report-pdf-sheet';
 import {
   aggregateEntries,
+  buildPeriodReportMessage,
   buildStudyChartMessage,
   buildWhatsAppUrl,
   computePerformance,
@@ -15,6 +17,7 @@ import {
   flattenLocalDailyProgress,
   formatDisplayDate,
   getCurrentJuzFromProgress,
+  getPeriodBounds,
   mergeDailyEntries,
   mergeEntryWithProgress,
   performanceLabel,
@@ -56,7 +59,11 @@ export default function DailyReportPanel({ students, progressByStudent = {} }) {
   const [reportRange, setReportRange] = useState('daily');
   const [showPreview, setShowPreview] = useState(false);
   const [pdfBusy, setPdfBusy] = useState(false);
+  const [periodBusy, setPeriodBusy] = useState(null);
+  const [showPeriodPreview, setShowPeriodPreview] = useState(false);
   const pdfSheetRef = useRef(null);
+  const weeklyPdfSheetRef = useRef(null);
+  const monthlyPdfSheetRef = useRef(null);
 
   const classOptions = useMemo(() => {
     const values = [...new Set(students.map((student) => student.className).filter(Boolean))];
@@ -192,6 +199,33 @@ export default function DailyReportPanel({ students, progressByStudent = {} }) {
       className: selectedClass
     })
   ), [activeStudents, entriesByStudent, selectedClass, selectedDate, settings]);
+
+  const weeklyBounds = useMemo(() => getPeriodBounds(selectedDate, 'weekly'), [selectedDate]);
+  const monthlyBounds = useMemo(() => getPeriodBounds(selectedDate, 'monthly'), [selectedDate]);
+
+  const weeklyMessage = useMemo(() => (
+    buildPeriodReportMessage({
+      period: 'weekly',
+      from: weeklyBounds.from,
+      to: weeklyBounds.to,
+      students: activeStudents,
+      savedEntries,
+      className: selectedClass,
+      settings
+    })
+  ), [activeStudents, savedEntries, selectedClass, settings, weeklyBounds.from, weeklyBounds.to]);
+
+  const monthlyMessage = useMemo(() => (
+    buildPeriodReportMessage({
+      period: 'monthly',
+      from: monthlyBounds.from,
+      to: monthlyBounds.to,
+      students: activeStudents,
+      savedEntries,
+      className: selectedClass,
+      settings
+    })
+  ), [activeStudents, savedEntries, selectedClass, settings, monthlyBounds.from, monthlyBounds.to]);
 
   const reportTotals = useMemo(() => {
     const from = reportRange === 'weekly'
@@ -376,6 +410,103 @@ export default function DailyReportPanel({ students, progressByStudent = {} }) {
     }
   }
 
+  function getPeriodMessage(period) {
+    return period === 'weekly' ? weeklyMessage : monthlyMessage;
+  }
+
+  function getPeriodPdfRef(period) {
+    return period === 'weekly' ? weeklyPdfSheetRef : monthlyPdfSheetRef;
+  }
+
+  async function createPeriodPdfFile(period) {
+    const sheetRef = getPeriodPdfRef(period);
+    if (!sheetRef.current) {
+      throw new Error('PDF template not ready.');
+    }
+
+    const { from, to } = getPeriodBounds(selectedDate, period);
+    return createDailyReportPdfFile(sheetRef.current, {
+      date: selectedDate,
+      className: selectedClass,
+      period,
+      from,
+      to
+    });
+  }
+
+  async function downloadPeriodPdf(period) {
+    if (!activeStudents.length) {
+      setFeedback({ kind: 'error', text: 'Add at least one student before creating a PDF.' });
+      return;
+    }
+
+    const label = period === 'weekly' ? 'Weekly' : 'Monthly';
+    setPeriodBusy(period);
+    setFeedback({ kind: 'info', text: `Creating ${label.toLowerCase()} PDF report…` });
+
+    try {
+      const pdfFile = await createPeriodPdfFile(period);
+      const { from, to } = getPeriodBounds(selectedDate, period);
+      const pdf = await generateDailyReportPdf(getPeriodPdfRef(period).current);
+      pdf.save(buildPdfFilename({ date: selectedDate, className: selectedClass, period, from, to }));
+      setFeedback({ kind: 'success', text: `${label} PDF saved as ${pdfFile.name}` });
+    } catch (error) {
+      setFeedback({ kind: 'error', text: error.message || 'Could not create PDF.' });
+    } finally {
+      setPeriodBusy(null);
+    }
+  }
+
+  async function sendPeriodPdfWhatsApp(period) {
+    if (!activeStudents.length) {
+      setFeedback({ kind: 'error', text: 'Add at least one student before sending the report.' });
+      return;
+    }
+
+    const label = period === 'weekly' ? 'Weekly' : 'Monthly';
+    const message = getPeriodMessage(period);
+    setPeriodBusy(period);
+    setFeedback({ kind: 'info', text: `Preparing ${label.toLowerCase()} PDF for WhatsApp…` });
+
+    try {
+      const pdfFile = await createPeriodPdfFile(period);
+      const whatsappUrl = buildWhatsAppUrl(message, settings.whatsappNumber || defaultSettings.whatsappNumber);
+      const result = await sharePdfToWhatsApp({ pdfFile, message, whatsappUrl });
+
+      if (result === 'shared') {
+        setFeedback({ kind: 'success', text: `${label} PDF ready. Choose WhatsApp in the share menu to send the report.` });
+      } else {
+        setFeedback({
+          kind: 'success',
+          text: `${label} PDF downloaded. WhatsApp opened — attach the PDF file and send to +91 89438 38168.`
+        });
+      }
+    } catch (error) {
+      if (error?.name !== 'AbortError') {
+        try {
+          const pdfFile = await createPeriodPdfFile(period);
+          downloadBlobFile(pdfFile);
+          window.open(buildWhatsAppUrl(message, settings.whatsappNumber || defaultSettings.whatsappNumber), '_blank', 'noopener,noreferrer');
+          setFeedback({ kind: 'success', text: `${label} PDF downloaded. WhatsApp opened — attach the PDF and send.` });
+        } catch (innerError) {
+          setFeedback({ kind: 'error', text: innerError.message || 'Could not prepare PDF for WhatsApp.' });
+        }
+      }
+    } finally {
+      setPeriodBusy(null);
+    }
+  }
+
+  function sendPeriodTextWhatsApp(period) {
+    const label = period === 'weekly' ? 'Weekly' : 'Monthly';
+    window.open(
+      buildWhatsAppUrl(getPeriodMessage(period), settings.whatsappNumber || defaultSettings.whatsappNumber),
+      '_blank',
+      'noopener,noreferrer'
+    );
+    setFeedback({ kind: 'success', text: `Opening WhatsApp with the ${label.toLowerCase()} progress report.` });
+  }
+
   return (
     <div className="daily-report-panel">
       <div className="daily-report-header">
@@ -546,7 +677,10 @@ export default function DailyReportPanel({ students, progressByStudent = {} }) {
                 key={range}
                 type="button"
                 className={`report-range-tab ${reportRange === range ? 'active' : ''}`}
-                onClick={() => setReportRange(range)}
+                onClick={() => {
+                  setReportRange(range);
+                  setShowPeriodPreview(false);
+                }}
               >
                 {range.charAt(0).toUpperCase() + range.slice(1)}
               </button>
@@ -557,6 +691,50 @@ export default function DailyReportPanel({ students, progressByStudent = {} }) {
           Showing {reportRange} totals from {formatDisplayDate(reportTotals.from)}
           {reportTotals.from !== reportTotals.to ? ` to ${formatDisplayDate(reportTotals.to)}` : ''}
         </p>
+        {reportRange === 'weekly' || reportRange === 'monthly' ? (
+          <div className="report-period-toolbar">
+            <button
+              className="btn-small btn-small-gold"
+              type="button"
+              onClick={() => downloadPeriodPdf(reportRange)}
+              disabled={Boolean(periodBusy)}
+            >
+              {periodBusy === reportRange ? 'Creating PDF…' : `Download ${reportRange === 'weekly' ? 'Weekly' : 'Monthly'} PDF`}
+            </button>
+            <button
+              className="btn-small btn-small-primary whatsapp-button"
+              type="button"
+              onClick={() => sendPeriodPdfWhatsApp(reportRange)}
+              disabled={Boolean(periodBusy)}
+            >
+              PDF &amp; Send WhatsApp
+            </button>
+            <button
+              className="btn-small btn-small-outline whatsapp-button"
+              type="button"
+              onClick={() => sendPeriodTextWhatsApp(reportRange)}
+              disabled={Boolean(periodBusy)}
+            >
+              Text Only WhatsApp
+            </button>
+            <button
+              className="btn-small btn-small-gold"
+              type="button"
+              onClick={() => setShowPeriodPreview((current) => !current)}
+            >
+              {showPeriodPreview ? 'Hide Preview' : 'Preview Report'}
+            </button>
+          </div>
+        ) : null}
+        {showPeriodPreview && (reportRange === 'weekly' || reportRange === 'monthly') ? (
+          <div className="whatsapp-preview">
+            <div className="whatsapp-preview-head">
+              <strong>{reportRange === 'weekly' ? 'Weekly' : 'Monthly'} Report Preview</strong>
+              <span>{formatDisplayDate(reportTotals.from)} – {formatDisplayDate(reportTotals.to)}</span>
+            </div>
+            <pre>{getPeriodMessage(reportRange)}</pre>
+          </div>
+        ) : null}
         <div className="report-summary-grid">
           {reportTotals.perStudent.map(({ student, totals }) => (
             <article key={student.id} className="report-summary-card">
@@ -579,6 +757,24 @@ export default function DailyReportPanel({ students, progressByStudent = {} }) {
         className={selectedClass}
         students={activeStudents}
         entriesByStudent={entriesByStudent}
+      />
+      <PeriodReportPdfSheet
+        ref={weeklyPdfSheetRef}
+        period="weekly"
+        from={weeklyBounds.from}
+        to={weeklyBounds.to}
+        className={selectedClass}
+        students={activeStudents}
+        savedEntries={savedEntries}
+      />
+      <PeriodReportPdfSheet
+        ref={monthlyPdfSheetRef}
+        period="monthly"
+        from={monthlyBounds.from}
+        to={monthlyBounds.to}
+        className={selectedClass}
+        students={activeStudents}
+        savedEntries={savedEntries}
       />
     </div>
   );

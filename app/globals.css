@@ -1788,6 +1788,48 @@ tr:hover td {
   font-size: 0.92rem;
 }
 
+.report-period-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 1rem;
+}
+
+.pdf-period-table th,
+.pdf-period-table td {
+  font-size: 0.65rem;
+  padding: 6px 4px;
+}
+
+.pdf-period-table th:nth-child(1),
+.pdf-period-table td:nth-child(1) {
+  width: 18%;
+}
+
+.pdf-period-table th:nth-child(2),
+.pdf-period-table td:nth-child(2) {
+  width: 9%;
+}
+
+.pdf-period-table th:nth-child(3),
+.pdf-period-table td:nth-child(3),
+.pdf-period-table th:nth-child(4),
+.pdf-period-table td:nth-child(4),
+.pdf-period-table th:nth-child(5),
+.pdf-period-table td:nth-child(5),
+.pdf-period-table th:nth-child(6),
+.pdf-period-table td:nth-child(6),
+.pdf-period-table th:nth-child(7),
+.pdf-period-table td:nth-child(7) {
+  width: 8%;
+}
+
+.pdf-period-table th:nth-child(8),
+.pdf-period-table td:nth-child(8),
+.pdf-period-table td.pdf-col-performance {
+  width: 11%;
+}
+
 .report-summary-grid,
 .parent-student-grid,
 .parent-metrics-grid {
