@@ -36,10 +36,13 @@ const dailyProgressStorageKey = dailyProgressKey;
 
 function PracticeToggle({ label, checked, onChange }) {
   return (
-    <label className="practice-toggle">
-      <input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} />
-      <span className={`practice-chip ${checked ? 'done' : 'missed'}`}>{label}</span>
-    </label>
+    <button
+      type="button"
+      className={`practice-chip ${checked ? 'done' : 'missed'}`}
+      onClick={() => onChange(!checked)}
+    >
+      {label}
+    </button>
   );
 }
 

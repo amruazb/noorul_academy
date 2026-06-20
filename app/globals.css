@@ -1435,6 +1435,17 @@ tr:hover td {
     overflow-x: hidden;
   }
 
+  .app-shell,
+  main {
+    overflow-x: hidden;
+    max-width: 100%;
+  }
+
+  .table-wrap,
+  .daily-report-table-wrap {
+    overscroll-behavior-x: contain;
+  }
+
   .admin-header {
     padding: 1rem 0.8rem 0;
   }
@@ -1616,6 +1627,9 @@ tr:hover td {
 
 .daily-report-table-wrap {
   overflow-x: auto;
+  overscroll-behavior-x: contain;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
 }
 
 .daily-report-table {
@@ -1661,25 +1675,27 @@ tr:hover td {
   cursor: default;
 }
 
-.practice-toggle {
-  display: inline-flex;
-  align-items: center;
-}
-
-.practice-toggle input {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
-}
-
 .practice-chip {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
   padding: 0.35rem 0.65rem;
   border-radius: 999px;
   font-size: 0.78rem;
   font-weight: 700;
   border: 1px solid transparent;
+  cursor: pointer;
+  font-family: inherit;
+  line-height: 1.2;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.practice-chip:focus-visible {
+  outline: 2px solid rgba(201, 162, 39, 0.55);
+  outline-offset: 1px;
 }
 
 .practice-chip.done {
@@ -1697,6 +1713,8 @@ tr:hover td {
 .practice-stack {
   display: grid;
   gap: 0.35rem;
+  width: 100%;
+  min-width: 0;
 }
 
 .performance-badge {
