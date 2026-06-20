@@ -14,7 +14,9 @@ import {
   endOfWeek,
   flattenLocalDailyProgress,
   formatDisplayDate,
+  getCurrentJuzFromProgress,
   mergeDailyEntries,
+  mergeEntryWithProgress,
   performanceLabel,
   settingsKey,
   startOfMonth,
@@ -41,7 +43,7 @@ function PracticeToggle({ label, checked, onChange }) {
   );
 }
 
-export default function DailyReportPanel({ students }) {
+export default function DailyReportPanel({ students, progressByStudent = {} }) {
   const [selectedDate, setSelectedDate] = useState(todayIsoDate());
   const [selectedClass, setSelectedClass] = useState('');
   const [entriesByStudent, setEntriesByStudent] = useState({});
@@ -130,7 +132,11 @@ export default function DailyReportPanel({ students }) {
         for (const student of activeStudents) {
           const remote = remoteEntries.find((entry) => String(entry.studentId) === String(student.id));
           const cached = cachedForDate[String(student.id)];
-          nextEntries[String(student.id)] = remote || cached || emptyDailyEntry();
+          const savedEntry = remote || cached || emptyDailyEntry();
+          nextEntries[String(student.id)] = mergeEntryWithProgress(
+            savedEntry,
+            progressByStudent[String(student.id)]
+          );
         }
 
         setEntriesByStudent(nextEntries);
@@ -138,7 +144,11 @@ export default function DailyReportPanel({ students }) {
         if (cancelled) return;
         const nextEntries = {};
         for (const student of activeStudents) {
-          nextEntries[String(student.id)] = cachedForDate[String(student.id)] || emptyDailyEntry();
+          const cached = cachedForDate[String(student.id)] || emptyDailyEntry();
+          nextEntries[String(student.id)] = mergeEntryWithProgress(
+            cached,
+            progressByStudent[String(student.id)]
+          );
         }
         setEntriesByStudent(nextEntries);
       }
@@ -148,7 +158,27 @@ export default function DailyReportPanel({ students }) {
     return () => {
       cancelled = true;
     };
-  }, [activeStudents, selectedDate]);
+  }, [activeStudents, progressByStudent, selectedDate]);
+
+  useEffect(() => {
+    setEntriesByStudent((current) => {
+      const next = { ...current };
+      let changed = false;
+
+      for (const student of activeStudents) {
+        const studentKey = String(student.id);
+        const derivedJuz = getCurrentJuzFromProgress(progressByStudent[studentKey]?.juz);
+        const existing = next[studentKey] || emptyDailyEntry();
+
+        if (derivedJuz !== '' && String(existing.currentJuz) !== String(derivedJuz)) {
+          next[studentKey] = { ...existing, currentJuz: derivedJuz };
+          changed = true;
+        }
+      }
+
+      return changed ? next : current;
+    });
+  }, [activeStudents, progressByStudent]);
 
   const whatsappMessage = useMemo(() => (
     buildStudyChartMessage({
@@ -184,23 +214,31 @@ export default function DailyReportPanel({ students }) {
   }, [activeStudents, reportRange, savedEntries, selectedDate]);
 
   function updateEntry(studentId, patch) {
-    setEntriesByStudent((current) => ({
-      ...current,
-      [studentId]: {
-        ...(current[studentId] || emptyDailyEntry()),
-        ...patch
+    setEntriesByStudent((current) => {
+      const existing = current[studentId] || emptyDailyEntry();
+      const nextEntry = { ...existing, ...patch };
+
+      if ('ayatsLearned' in patch) {
+        nextEntry.achievedLines = patch.ayatsLearned;
       }
-    }));
+
+      return {
+        ...current,
+        [studentId]: nextEntry
+      };
+    });
   }
 
   async function saveDailyReport() {
     const entries = activeStudents.map((student) => {
       const draft = entriesByStudent[String(student.id)] || emptyDailyEntry();
-      const performance = computePerformance(draft);
+      const ayats = Number(draft.ayatsLearned) || 0;
+      const performance = computePerformance({ ...draft, achievedLines: ayats });
       return {
         studentId: student.id,
         progressDate: selectedDate,
         ...draft,
+        achievedLines: ayats,
         performance
       };
     });
@@ -423,12 +461,13 @@ export default function DailyReportPanel({ students }) {
                   <td>{student.course}</td>
                   <td>
                     <input
-                      className="mini-input"
+                      className="mini-input mini-input-readonly"
                       type="number"
                       min="1"
                       max="30"
                       value={entry.currentJuz}
-                      onChange={(event) => updateEntry(String(student.id), { currentJuz: event.target.value })}
+                      readOnly
+                      title="Synced from Student Progress tab"
                     />
                   </td>
                   <td>
@@ -451,11 +490,12 @@ export default function DailyReportPanel({ students }) {
                   </td>
                   <td>
                     <input
-                      className="mini-input achieved-input"
+                      className="mini-input achieved-input mini-input-readonly"
                       type="number"
                       min="0"
-                      value={entry.achievedLines}
-                      onChange={(event) => updateEntry(String(student.id), { achievedLines: event.target.value })}
+                      value={entry.ayatsLearned || 0}
+                      readOnly
+                      title="Synced with Ayats learned"
                     />
                   </td>
                   <td>

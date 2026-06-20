@@ -89,7 +89,7 @@ function StudentProgressCard({ student, dailyEntries, progressByStudent, rangeBo
           <div key={`${student.id}-${entry.progressDate}`} className="parent-recent-row">
             <div className="parent-recent-info">
               <strong>{formatDisplayDate(entry.progressDate)}</strong>
-              <span>{entry.attendance ? 'Present' : 'Absent'} · {entry.ayatsLearned || 0} ayats · {entry.achievedLines || 0} lines</span>
+              <span className="parent-recent-meta">{entry.attendance ? 'Present' : 'Absent'} · {entry.ayatsLearned || 0} ayats · {entry.achievedLines || 0} lines</span>
             </div>
             <div className="parent-recent-badge">
               <span className={`performance-badge performance-${entry.performance || 'average'}`}>

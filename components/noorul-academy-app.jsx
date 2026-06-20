@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import html2canvas from 'html2canvas';
 import { aboutBullets, courseDetails, defaultPosterMessage, faculties, navigation, posterThemes } from '@/lib/site-data';
+import { dailyProgressKey, syncDailyJuzInCache, todayIsoDate } from '@/lib/daily-progress';
 import { loadJson, saveJson } from '@/lib/storage';
 import DailyReportPanel from '@/components/daily-report-panel';
 import ParentProgressPage from '@/components/parent-progress-page';
@@ -361,7 +362,10 @@ export default function NoorulAcademyApp() {
       [progressStudentId]: progressPayload
     }));
 
-    setProgressFeedback({ kind: 'success', text: 'Progress saved successfully.' });
+    const dailyCache = loadJson(dailyProgressKey, {});
+    saveJson(dailyProgressKey, syncDailyJuzInCache(progressStudentId, progressDraft.juz, todayIsoDate(), dailyCache));
+
+    setProgressFeedback({ kind: 'success', text: 'Progress saved. Juz updated on today\'s daily report.' });
 
     fetch('/api/progress', {
       method: 'PUT',
@@ -823,7 +827,7 @@ export default function NoorulAcademyApp() {
 
               {adminLoggedIn && activeAdminTab === 'daily' ? (
                 <div className="admin-section active">
-                  <DailyReportPanel students={students} />
+                  <DailyReportPanel students={students} progressByStudent={progressByStudent} />
                 </div>
               ) : null}
 

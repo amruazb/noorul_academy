@@ -115,7 +115,7 @@ const DailyReportPdfSheet = forwardRef(function DailyReportPdfSheet({
                           <td>{entry.targetLines || 0}</td>
                           <td>{entry.achievedLines || 0}</td>
                           <td>{practiceSummary(entry)}</td>
-                          <td>
+                          <td className="pdf-col-performance">
                             <div className="pdf-performance-cell">
                               <span className={`pdf-performance pdf-performance-${performance}`}>{performanceLabel(performance)}</span>
                             </div>
