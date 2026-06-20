@@ -6,6 +6,7 @@ import { aboutBullets, courseDetails, defaultPosterMessage, faculties, navigatio
 import { loadJson, saveJson } from '@/lib/storage';
 import DailyReportPanel from '@/components/daily-report-panel';
 import ParentProgressPage from '@/components/parent-progress-page';
+import PublicProgressBoard from '@/components/public-progress-board';
 
 const studentKey = 'na_students';
 const progressKey = 'na_progress';
@@ -268,9 +269,22 @@ export default function NoorulAcademyApp() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newStudent)
-    }).catch(() => {
-      setEnrollmentFeedback({ kind: 'error', text: 'Saved locally, but Supabase sync failed.' });
-    });
+    })
+      .then(async (response) => {
+        if (!response.ok) return null;
+        return response.json();
+      })
+      .then((payload) => {
+        const savedStudent = payload?.student;
+        if (!savedStudent?.id) return;
+
+        setStudents((current) => current.map((student) => (
+          student.id === newStudent.id ? { ...student, ...savedStudent, className: savedStudent.className ?? student.className } : student
+        )));
+      })
+      .catch(() => {
+        setEnrollmentFeedback({ kind: 'error', text: 'Saved locally, but Supabase sync failed.' });
+      });
   }
 
   function deleteStudent(studentId) {
@@ -533,6 +547,20 @@ export default function NoorulAcademyApp() {
                   {faculties.map((faculty) => (
                     <FacultyCard key={faculty.name} {...faculty} />
                   ))}
+                </div>
+              </div>
+            </section>
+
+            <section className="section section-light home-progress-section">
+              <div className="section-inner">
+                <SectionHeader
+                  label="LIVE PROGRESS"
+                  title="Today's Student Progress"
+                  subtitle="Parents can see daily learning updates here without signing in. Full history is on the Progress page."
+                />
+                <PublicProgressBoard students={students} progressByStudent={progressByStudent} compact />
+                <div className="home-progress-actions">
+                  <button className="btn-primary" type="button" onClick={() => openPage('parent')}>View Full Progress Dashboard</button>
                 </div>
               </div>
             </section>

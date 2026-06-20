@@ -4,12 +4,16 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   aggregateEntries,
   buildStudyChartMessage,
+  buildWhatsAppUrl,
   computePerformance,
+  dailyProgressKey,
   defaultSettings,
   emptyDailyEntry,
   endOfMonth,
   endOfWeek,
+  flattenLocalDailyProgress,
   formatDisplayDate,
+  mergeDailyEntries,
   performanceLabel,
   settingsKey,
   startOfMonth,
@@ -18,7 +22,7 @@ import {
 } from '@/lib/daily-progress';
 import { loadJson, saveJson } from '@/lib/storage';
 
-const dailyProgressKey = 'na_daily_progress';
+const dailyProgressStorageKey = dailyProgressKey;
 
 function PracticeToggle({ label, checked, onChange }) {
   return (
@@ -58,6 +62,21 @@ export default function DailyReportPanel({ students }) {
     saveJson(settingsKey, settings);
   }, [settings]);
 
+  async function loadMergedEntries(from, to) {
+    const localEntries = flattenLocalDailyProgress(loadJson(dailyProgressStorageKey, {}))
+      .filter((entry) => (!from || entry.progressDate >= from) && (!to || entry.progressDate <= to));
+
+    try {
+      const query = from && to ? `?from=${from}&to=${to}` : '';
+      const response = await fetch(`/api/daily-progress${query}`);
+      const payload = response.ok ? await response.json() : null;
+      const remoteEntries = Array.isArray(payload?.entries) ? payload.entries : [];
+      return mergeDailyEntries(remoteEntries, localEntries);
+    } catch {
+      return localEntries;
+    }
+  }
+
   useEffect(() => {
     let cancelled = false;
 
@@ -73,14 +92,8 @@ export default function DailyReportPanel({ students }) {
           ? endOfMonth(selectedDate)
           : selectedDate;
 
-      try {
-        const response = await fetch(`/api/daily-progress?from=${from}&to=${to}`);
-        const payload = response.ok ? await response.json() : null;
-        if (cancelled) return;
-        setSavedEntries(Array.isArray(payload?.entries) ? payload.entries : []);
-      } catch {
-        if (!cancelled) setSavedEntries([]);
-      }
+      const entries = await loadMergedEntries(from, to);
+      if (!cancelled) setSavedEntries(entries);
     }
 
     loadReportEntries();
@@ -93,7 +106,7 @@ export default function DailyReportPanel({ students }) {
     let cancelled = false;
 
     async function loadEntries() {
-      const localCache = loadJson(dailyProgressKey, {});
+      const localCache = loadJson(dailyProgressStorageKey, {});
       const cachedForDate = localCache[selectedDate] || {};
 
       try {
@@ -132,9 +145,10 @@ export default function DailyReportPanel({ students }) {
       date: selectedDate,
       students: activeStudents,
       entriesByStudentId: entriesByStudent,
-      settings
+      settings,
+      className: selectedClass
     })
-  ), [activeStudents, entriesByStudent, selectedDate, settings]);
+  ), [activeStudents, entriesByStudent, selectedClass, selectedDate, settings]);
 
   const reportTotals = useMemo(() => {
     const from = reportRange === 'weekly'
@@ -183,9 +197,9 @@ export default function DailyReportPanel({ students }) {
 
     setSavedEntries(entries);
 
-    const localCache = loadJson(dailyProgressKey, {});
+    const localCache = loadJson(dailyProgressStorageKey, {});
     localCache[selectedDate] = Object.fromEntries(entries.map((entry) => [String(entry.studentId), entry]));
-    saveJson(dailyProgressKey, localCache);
+    saveJson(dailyProgressStorageKey, localCache);
 
     try {
       const response = await fetch('/api/daily-progress', {
@@ -194,25 +208,50 @@ export default function DailyReportPanel({ students }) {
         body: JSON.stringify({ entries })
       });
 
+      const payload = response.ok ? await response.json() : null;
       if (!response.ok) {
-        throw new Error('Sync failed');
+        const errorPayload = payload || {};
+        throw new Error(errorPayload.error || 'Sync failed');
       }
 
-      setFeedback({ kind: 'success', text: 'Daily report saved successfully.' });
-    } catch {
-      setFeedback({ kind: 'error', text: 'Saved locally, but Supabase sync failed.' });
+      const from = reportRange === 'weekly'
+        ? startOfWeek(selectedDate)
+        : reportRange === 'monthly'
+          ? startOfMonth(selectedDate)
+          : selectedDate;
+      const to = reportRange === 'weekly'
+        ? endOfWeek(selectedDate)
+        : reportRange === 'monthly'
+          ? endOfMonth(selectedDate)
+          : selectedDate;
+      const mergedEntries = await loadMergedEntries(from, to);
+      setSavedEntries(mergedEntries);
+      setFeedback({ kind: 'success', text: 'Daily report saved. Progress is now visible on the public dashboard.' });
+    } catch (error) {
+      const from = reportRange === 'weekly'
+        ? startOfWeek(selectedDate)
+        : reportRange === 'monthly'
+          ? startOfMonth(selectedDate)
+          : selectedDate;
+      const to = reportRange === 'weekly'
+        ? endOfWeek(selectedDate)
+        : reportRange === 'monthly'
+          ? endOfMonth(selectedDate)
+          : selectedDate;
+      const mergedEntries = await loadMergedEntries(from, to);
+      setSavedEntries(mergedEntries);
+      setFeedback({
+        kind: 'error',
+        text: error.message?.includes('foreign key')
+          ? 'Saved locally. Sync failed because the student is not in Supabase yet — re-enrol or check student IDs.'
+          : 'Saved locally. Progress shows on the dashboard, but Supabase sync failed.'
+      });
     }
   }
 
-  async function copyAndOpenWhatsApp() {
-    try {
-      await navigator.clipboard.writeText(whatsappMessage);
-      setFeedback({ kind: 'success', text: 'Study chart copied. Opening WhatsApp — paste it in your group.' });
-      window.open('https://web.whatsapp.com/', '_blank', 'noopener,noreferrer');
-    } catch {
-      setFeedback({ kind: 'error', text: 'Could not copy message. Please copy from the preview below.' });
-      setShowPreview(true);
-    }
+  function sendWhatsApp() {
+    window.open(buildWhatsAppUrl(whatsappMessage, settings.whatsappNumber || defaultSettings.whatsappNumber), '_blank', 'noopener,noreferrer');
+    setFeedback({ kind: 'success', text: 'Opening WhatsApp with the study chart for +91 89438 38168.' });
   }
 
   return (
@@ -252,8 +291,8 @@ export default function DailyReportPanel({ students }) {
             {showPreview ? 'Hide Preview' : 'Preview Chart'}
           </button>
           {settings.whatsappEnabled !== false ? (
-            <button className="btn-small btn-small-outline whatsapp-button" type="button" onClick={copyAndOpenWhatsApp}>
-              Copy &amp; Open WhatsApp
+            <button className="btn-small btn-small-outline whatsapp-button" type="button" onClick={sendWhatsApp}>
+              Send to WhatsApp (+91 89438 38168)
             </button>
           ) : null}
         </div>

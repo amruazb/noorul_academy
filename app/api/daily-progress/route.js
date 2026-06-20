@@ -37,10 +37,7 @@ export async function GET(request) {
   const phone = searchParams.get('phone');
 
   if (!supabaseAdmin) {
-    if (date || from || to) {
-      return NextResponse.json({ entries: [] });
-    }
-    return NextResponse.json({ error: 'Supabase admin client is not configured.' }, { status: 500 });
+    return NextResponse.json({ entries: [] });
   }
 
   let query = supabaseAdmin.from('daily_progress').select('*');
