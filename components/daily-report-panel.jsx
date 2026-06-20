@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import DailyReportPdfSheet from '@/components/daily-report-pdf-sheet';
 import {
   aggregateEntries,
   buildStudyChartMessage,
@@ -20,6 +21,13 @@ import {
   startOfWeek,
   todayIsoDate
 } from '@/lib/daily-progress';
+import {
+  buildPdfFilename,
+  createDailyReportPdfFile,
+  downloadBlobFile,
+  generateDailyReportPdf,
+  sharePdfToWhatsApp
+} from '@/lib/generate-daily-report-pdf';
 import { loadJson, saveJson } from '@/lib/storage';
 
 const dailyProgressStorageKey = dailyProgressKey;
@@ -42,6 +50,8 @@ export default function DailyReportPanel({ students }) {
   const [feedback, setFeedback] = useState(null);
   const [reportRange, setReportRange] = useState('daily');
   const [showPreview, setShowPreview] = useState(false);
+  const [pdfBusy, setPdfBusy] = useState(false);
+  const pdfSheetRef = useRef(null);
 
   const classOptions = useMemo(() => {
     const values = [...new Set(students.map((student) => student.className).filter(Boolean))];
@@ -254,6 +264,77 @@ export default function DailyReportPanel({ students }) {
     setFeedback({ kind: 'success', text: 'Opening WhatsApp with the study chart for +91 89438 38168.' });
   }
 
+  async function createPdfFile() {
+    if (!pdfSheetRef.current) {
+      throw new Error('PDF template not ready.');
+    }
+
+    return createDailyReportPdfFile(pdfSheetRef.current, {
+      date: selectedDate,
+      className: selectedClass
+    });
+  }
+
+  async function downloadDailyPdf() {
+    if (!activeStudents.length) {
+      setFeedback({ kind: 'error', text: 'Add at least one student before creating a PDF.' });
+      return;
+    }
+
+    setPdfBusy(true);
+    setFeedback({ kind: 'info', text: 'Creating PDF report…' });
+
+    try {
+      const pdfFile = await createPdfFile();
+      const pdf = await generateDailyReportPdf(pdfSheetRef.current);
+      pdf.save(buildPdfFilename({ date: selectedDate, className: selectedClass }));
+      setFeedback({ kind: 'success', text: `PDF saved as ${pdfFile.name}` });
+    } catch (error) {
+      setFeedback({ kind: 'error', text: error.message || 'Could not create PDF.' });
+    } finally {
+      setPdfBusy(false);
+    }
+  }
+
+  async function savePdfAndSendWhatsApp() {
+    if (!activeStudents.length) {
+      setFeedback({ kind: 'error', text: 'Add at least one student before sending the report.' });
+      return;
+    }
+
+    setPdfBusy(true);
+    setFeedback({ kind: 'info', text: 'Saving report and preparing PDF for WhatsApp…' });
+
+    try {
+      await saveDailyReport();
+      const pdfFile = await createPdfFile();
+      const whatsappUrl = buildWhatsAppUrl(whatsappMessage, settings.whatsappNumber || defaultSettings.whatsappNumber);
+      const result = await sharePdfToWhatsApp({ pdfFile, message: whatsappMessage, whatsappUrl });
+
+      if (result === 'shared') {
+        setFeedback({ kind: 'success', text: 'PDF ready. Choose WhatsApp in the share menu to send the report.' });
+      } else {
+        setFeedback({
+          kind: 'success',
+          text: 'PDF downloaded. WhatsApp opened — attach the PDF file and send to +91 89438 38168.'
+        });
+      }
+    } catch (error) {
+      if (error?.name !== 'AbortError') {
+        try {
+          const pdfFile = await createPdfFile();
+          downloadBlobFile(pdfFile);
+          window.open(buildWhatsAppUrl(whatsappMessage, settings.whatsappNumber || defaultSettings.whatsappNumber), '_blank', 'noopener,noreferrer');
+          setFeedback({ kind: 'success', text: 'PDF downloaded. WhatsApp opened — attach the PDF and send.' });
+        } catch (innerError) {
+          setFeedback({ kind: 'error', text: innerError.message || 'Could not prepare PDF for WhatsApp.' });
+        }
+      }
+    } finally {
+      setPdfBusy(false);
+    }
+  }
+
   return (
     <div className="daily-report-panel">
       <div className="daily-report-header">
@@ -287,12 +368,18 @@ export default function DailyReportPanel({ students }) {
         </label>
         <div className="daily-report-actions">
           <button className="btn-small btn-small-primary" type="button" onClick={saveDailyReport}>Save Daily Report</button>
+          <button className="btn-small btn-small-gold" type="button" onClick={downloadDailyPdf} disabled={pdfBusy}>
+            {pdfBusy ? 'Creating PDF…' : 'Download PDF'}
+          </button>
+          <button className="btn-small btn-small-primary whatsapp-button" type="button" onClick={savePdfAndSendWhatsApp} disabled={pdfBusy}>
+            Save PDF &amp; Send WhatsApp
+          </button>
           <button className="btn-small btn-small-gold" type="button" onClick={() => setShowPreview((current) => !current)}>
             {showPreview ? 'Hide Preview' : 'Preview Chart'}
           </button>
           {settings.whatsappEnabled !== false ? (
             <button className="btn-small btn-small-outline whatsapp-button" type="button" onClick={sendWhatsApp}>
-              Send to WhatsApp (+91 89438 38168)
+              Text Only WhatsApp
             </button>
           ) : null}
         </div>
@@ -442,6 +529,14 @@ export default function DailyReportPanel({ students }) {
       </div>
 
       {feedback ? <div className={`alert alert-${feedback.kind}`}>{feedback.text}</div> : null}
+
+      <DailyReportPdfSheet
+        ref={pdfSheetRef}
+        date={selectedDate}
+        className={selectedClass}
+        students={activeStudents}
+        entriesByStudent={entriesByStudent}
+      />
     </div>
   );
 }
