@@ -2135,7 +2135,7 @@ tr:hover td {
 .pdf-table th,
 .pdf-table td {
   border: 1px solid rgba(13, 43, 78, 0.12);
-  padding: 7px 8px;
+  padding: 8px 6px;
   text-align: left;
   vertical-align: middle;
 }
@@ -2143,6 +2143,15 @@ tr:hover td {
 .pdf-table th:nth-child(1),
 .pdf-table td:nth-child(1) {
   width: 19%;
+  text-align: left;
+}
+
+.pdf-table th {
+  background: #d9eaf8;
+  color: #0d2b4e;
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  text-align: center;
 }
 
 .pdf-table th:nth-child(2),
@@ -2179,69 +2188,32 @@ tr:hover td {
 .pdf-table td:nth-child(9),
 .pdf-table td.pdf-col-performance {
   width: 12%;
-  height: 36px;
-  padding: 0;
   text-align: center;
   vertical-align: middle;
-  overflow: hidden;
-  line-height: 0;
-  position: relative;
-}
-
-.pdf-table tbody tr {
-  height: 36px;
-}
-
-.pdf-table th {
-  background: #d9eaf8;
-  color: #0d2b4e;
-  font-size: 0.68rem;
-  letter-spacing: 0.04em;
-  text-align: center;
-}
-
-.pdf-table th:nth-child(1),
-.pdf-table td:nth-child(1) {
-  text-align: left;
+  padding: 8px 4px;
 }
 
 .pdf-present { color: #1f7a49; font-weight: 700; }
 .pdf-absent { color: #c0392b; font-weight: 700; }
 
-.pdf-performance-cell {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  padding: 0 6px;
-  text-align: center;
-  box-sizing: border-box;
-}
-
+/* PDF performance badge — centered in table cell (used by html2canvas) */
 .pdf-performance {
   display: inline-block;
-  width: auto;
   min-width: 72px;
-  max-width: 100%;
-  height: 20px;
+  height: 18px;
   padding: 0 10px;
-  margin: 0;
   border-radius: 999px;
   color: #ffffff;
   font-family: Arial, Helvetica, sans-serif;
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.04em;
-  line-height: 20px;
+  line-height: 18px;
   text-align: center;
   white-space: nowrap;
   box-sizing: border-box;
   text-transform: uppercase;
   vertical-align: middle;
-  transform: translateY(-1px);
 }
 
 .pdf-performance-excellent { background: #1f9d55; color: #ffffff; }
