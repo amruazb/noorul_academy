@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from 'react';
 import html2canvas from 'html2canvas';
 import { aboutBullets, courseDetails, defaultPosterMessage, faculties, navigation, posterThemes } from '@/lib/site-data';
 import { loadJson, saveJson } from '@/lib/storage';
+import DailyReportPanel from '@/components/daily-report-panel';
+import ParentProgressPage from '@/components/parent-progress-page';
 
 const studentKey = 'na_students';
 const progressKey = 'na_progress';
@@ -639,6 +641,10 @@ export default function NoorulAcademyApp() {
           </section>
         ) : null}
 
+        {activePage === 'parent' ? (
+          <ParentProgressPage students={students} progressByStudent={progressByStudent} />
+        ) : null}
+
         {activePage === 'admin' ? (
           <section className="admin-page">
             <div className="admin-header">
@@ -647,13 +653,13 @@ export default function NoorulAcademyApp() {
                 {adminLoggedIn ? <button className="btn-small btn-small-outline" onClick={handleAdminLogout}>Logout</button> : null}
                 {adminLoggedIn ? (
                   <div className="admin-tabs">
-                    {['dashboard', 'students', 'progress', 'poster'].map((tab) => (
+                    {['dashboard', 'students', 'daily', 'progress', 'poster'].map((tab) => (
                       <button
                         key={tab}
                         className={`admin-tab ${activeAdminTab === tab ? 'active' : ''}`}
                         onClick={() => setActiveAdminTab(tab)}
                       >
-                        {tab === 'poster' ? '🎨 Poster Creator' : tab}
+                        {tab === 'poster' ? '🎨 Poster Creator' : tab === 'daily' ? 'Daily Report' : tab}
                       </button>
                     ))}
                   </div>
@@ -769,6 +775,12 @@ export default function NoorulAcademyApp() {
                       </tbody>
                     </table>
                   </div>
+                </div>
+              ) : null}
+
+              {adminLoggedIn && activeAdminTab === 'daily' ? (
+                <div className="admin-section active">
+                  <DailyReportPanel students={students} />
                 </div>
               ) : null}
 

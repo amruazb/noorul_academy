@@ -1556,3 +1556,293 @@ tr:hover td {
     grid-template-columns: repeat(auto-fill, minmax(58px, 1fr));
   }
 }
+
+.daily-report-panel,
+.parent-progress-page {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.daily-report-header,
+.daily-report-toolbar,
+.report-summary-panel,
+.parent-student-card,
+.whatsapp-preview {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  box-shadow: var(--shadow);
+}
+
+.daily-report-header,
+.daily-report-toolbar,
+.report-summary-panel,
+.whatsapp-preview {
+  padding: 1.25rem;
+}
+
+.daily-report-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.daily-report-controls,
+.daily-report-actions,
+.report-summary-head,
+.parent-student-head,
+.whatsapp-preview-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.daily-report-toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.settings-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--text-mid);
+  font-size: 0.92rem;
+}
+
+.daily-report-table-wrap {
+  overflow-x: auto;
+}
+
+.daily-report-table {
+  min-width: 980px;
+}
+
+.mini-input {
+  width: 4.5rem;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid rgba(13, 43, 78, 0.15);
+  border-radius: 0.55rem;
+  background: #f8fbff;
+}
+
+.achieved-input {
+  background: #fff8df;
+}
+
+.practice-toggle {
+  display: inline-flex;
+  align-items: center;
+}
+
+.practice-toggle input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.practice-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  border: 1px solid transparent;
+}
+
+.practice-chip.done {
+  background: rgba(34, 139, 84, 0.12);
+  color: #1f7a49;
+  border-color: rgba(34, 139, 84, 0.25);
+}
+
+.practice-chip.missed {
+  background: rgba(180, 45, 45, 0.08);
+  color: #9b2d2d;
+  border-color: rgba(180, 45, 45, 0.18);
+}
+
+.practice-stack {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.performance-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 6.5rem;
+  padding: 0.35rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.performance-excellent { background: #1f9d55; color: white; }
+.performance-very_good { background: #2f7d4d; color: white; }
+.performance-good { background: #4f8fd9; color: white; }
+.performance-average { background: #d4a017; color: white; }
+.performance-fail { background: #c0392b; color: white; }
+
+.whatsapp-preview pre {
+  margin: 0.85rem 0 0;
+  padding: 1rem;
+  border-radius: 0.85rem;
+  background: #eef8f0;
+  color: #12301d;
+  white-space: pre-wrap;
+  font-family: var(--font-nunito);
+  line-height: 1.55;
+}
+
+.whatsapp-button {
+  border-color: #25d366 !important;
+  color: #128c47 !important;
+}
+
+.report-range-tabs {
+  display: inline-flex;
+  gap: 0.35rem;
+  padding: 0.25rem;
+  border-radius: 999px;
+  background: rgba(13, 43, 78, 0.06);
+}
+
+.report-range-tab {
+  border: 0;
+  background: transparent;
+  color: var(--text-mid);
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+.report-range-tab.active {
+  background: var(--navy);
+  color: white;
+}
+
+.report-range-caption {
+  margin: 0.35rem 0 0;
+  color: var(--text-soft);
+  font-size: 0.92rem;
+}
+
+.report-summary-grid,
+.parent-student-grid,
+.parent-metrics-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.report-summary-grid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  margin-top: 1rem;
+}
+
+.report-summary-card,
+.parent-student-card {
+  padding: 1rem;
+}
+
+.report-summary-card {
+  background: linear-gradient(180deg, rgba(201, 162, 39, 0.08), rgba(255, 255, 255, 0.9));
+}
+
+.report-metric,
+.parent-metric {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.55rem;
+  color: var(--text-mid);
+}
+
+.report-metric strong,
+.parent-metric strong {
+  color: var(--navy);
+}
+
+.parent-progress-shell {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 3rem;
+}
+
+.parent-lookup-form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1rem;
+  align-items: end;
+  margin-bottom: 1rem;
+}
+
+.parent-student-grid {
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+.parent-student-head h3 {
+  margin: 0 0 0.25rem;
+}
+
+.parent-student-head p {
+  margin: 0;
+  color: var(--text-soft);
+}
+
+.parent-metrics-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 1rem 0;
+}
+
+.parent-progress-bar-wrap {
+  height: 0.55rem;
+  border-radius: 999px;
+  background: rgba(13, 43, 78, 0.08);
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.parent-recent-list h4 {
+  margin: 0 0 0.75rem;
+}
+
+.parent-recent-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  border-top: 1px solid rgba(13, 43, 78, 0.08);
+}
+
+.parent-recent-row span {
+  display: block;
+  color: var(--text-soft);
+  font-size: 0.88rem;
+}
+
+.parent-range-tabs {
+  margin-top: 1rem;
+}
+
+@media (max-width: 768px) {
+  .parent-lookup-form,
+  .daily-report-header,
+  .daily-report-toolbar {
+    grid-template-columns: 1fr;
+    display: grid;
+  }
+
+  .daily-report-actions {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
