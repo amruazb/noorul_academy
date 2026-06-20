@@ -10,6 +10,7 @@ import PublicProgressBoard from '@/components/public-progress-board';
 
 const studentKey = 'na_students';
 const progressKey = 'na_progress';
+const adminAuthKey = 'na_admin_auth';
 
 const initialEnrollment = {
   name: '',
@@ -146,8 +147,12 @@ export default function NoorulAcademyApp() {
     }
 
     loadRemoteData();
-    if (typeof window !== 'undefined') {
-      window.localStorage.removeItem('na_admin_auth');
+
+    const savedAuth = loadJson(adminAuthKey, null);
+    if (savedAuth?.loggedIn) {
+      setAdminLoggedIn(true);
+      setAdminUser(savedAuth.email || '');
+      setActiveAdminTab('dashboard');
     }
 
     return () => {
@@ -204,7 +209,7 @@ export default function NoorulAcademyApp() {
 
     setActivePage(pageKey);
     window.scrollTo(0, 0);
-    if (pageKey === 'admin') {
+    if (pageKey === 'admin' && adminLoggedIn && activeAdminTab === 'login') {
       setActiveAdminTab('dashboard');
     }
   }
@@ -220,6 +225,11 @@ export default function NoorulAcademyApp() {
       setAdminLoggedIn(true);
       setAdminError(null);
       setActiveAdminTab('dashboard');
+      saveJson(adminAuthKey, {
+        loggedIn: true,
+        email: adminUser,
+        loggedInAt: new Date().toISOString()
+      });
     } else {
       setAdminError('Invalid email or password');
       setAdminLoggedIn(false);
@@ -228,7 +238,12 @@ export default function NoorulAcademyApp() {
 
   function handleAdminLogout() {
     setAdminLoggedIn(false);
+    setAdminUser('');
+    setAdminPass('');
     setActiveAdminTab('login');
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem(adminAuthKey);
+    }
     setActivePage('home');
   }
 
