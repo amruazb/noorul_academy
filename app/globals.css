@@ -1621,6 +1621,26 @@ tr:hover td {
 
 .daily-report-table {
   min-width: 980px;
+  table-layout: fixed;
+  width: 100%;
+}
+
+.daily-report-table th:last-child,
+.daily-report-table td:last-child {
+  text-align: center;
+  vertical-align: middle;
+  width: 9rem;
+}
+
+.daily-report-table td:last-child {
+  padding-left: 0.35rem;
+  padding-right: 0.35rem;
+}
+
+.daily-report-table .performance-badge {
+  min-width: 6.5rem;
+  width: 6.5rem;
+  box-sizing: border-box;
 }
 
 .mini-input {
@@ -2017,6 +2037,7 @@ tr:hover td {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.72rem;
+  table-layout: fixed;
 }
 
 .pdf-table th,
@@ -2024,6 +2045,50 @@ tr:hover td {
   border: 1px solid rgba(13, 43, 78, 0.12);
   padding: 7px 8px;
   text-align: left;
+  vertical-align: middle;
+}
+
+.pdf-table th:nth-child(1),
+.pdf-table td:nth-child(1) {
+  width: 19%;
+}
+
+.pdf-table th:nth-child(2),
+.pdf-table td:nth-child(2) {
+  width: 8%;
+  text-align: center;
+}
+
+.pdf-table th:nth-child(3),
+.pdf-table td:nth-child(3) {
+  width: 8%;
+  text-align: center;
+}
+
+.pdf-table th:nth-child(4),
+.pdf-table td:nth-child(4),
+.pdf-table th:nth-child(5),
+.pdf-table td:nth-child(5),
+.pdf-table th:nth-child(6),
+.pdf-table td:nth-child(6),
+.pdf-table th:nth-child(7),
+.pdf-table td:nth-child(7) {
+  width: 7%;
+  text-align: center;
+}
+
+.pdf-table th:nth-child(8),
+.pdf-table td:nth-child(8) {
+  width: 11%;
+  text-align: center;
+}
+
+.pdf-table th:nth-child(9),
+.pdf-table td:nth-child(9) {
+  width: 12%;
+  text-align: center;
+  padding-left: 4px;
+  padding-right: 4px;
 }
 
 .pdf-table th {
@@ -2036,13 +2101,28 @@ tr:hover td {
 .pdf-present { color: #1f7a49; font-weight: 700; }
 .pdf-absent { color: #c0392b; font-weight: 700; }
 
+.pdf-performance-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
 .pdf-performance {
-  display: inline-block;
-  padding: 3px 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 82px;
+  width: 82px;
+  padding: 4px 6px;
   border-radius: 999px;
   color: white;
-  font-size: 0.62rem;
+  font-size: 0.6rem;
   font-weight: 800;
+  letter-spacing: 0.03em;
+  line-height: 1;
+  white-space: nowrap;
+  box-sizing: border-box;
 }
 
 .pdf-performance-excellent { background: #1f9d55; }
